@@ -30,7 +30,6 @@ JError::$legacy = true;
 // Load the configuration
 require_once JPATH_CONFIGURATION . '/configuration.php';
 
-
 class MigrateNinjaBoard extends JApplicationCli {
 
 	/**
@@ -43,11 +42,11 @@ class MigrateNinjaBoard extends JApplicationCli {
 	function updateUserTable() {
 		// this is just in case we want the alias the users added
 		$query = 'ALTER TABLE `#__kunena_users` ADD COLUMN `alias` text AFTER `showOnline`';
-		
+
 		$db = JFactory::getDBO();
 		$db -> setQuery($query);
-		$result = $db->query();
-		
+		$result = $db -> query();
+
 	}
 
 	public function insertUser($NBuser) {
@@ -159,21 +158,20 @@ class MigrateNinjaBoard extends JApplicationCli {
 
 	}
 
-	
 	function addMotherCategory($title = "Forum") {
 		$db = JFactory::getDBO();
 		$query = "insert into `#__kunena_categories` ( `name`) values ( 'Forum')";
 		$db -> setQuery($query);
-		$result = $db->query();
-		
-		if(!empty($result)) {
-			$id = $db->insertid();
+		$result = $db -> query();
+
+		if (!empty($result)) {
+			$id = $db -> insertid();
 			$query = "Update #__kunena_categories set parent = '{$id}' where parent = '0'";
 			$db -> setQuery($query);
-			$result = $db->query();
-		
+			$result = $db -> query();
+
 		}
-		
+
 	}
 
 	function insertMessage($topic, $post) {
@@ -200,26 +198,26 @@ class MigrateNinjaBoard extends JApplicationCli {
 
 		$Message = new stdClass;
 		$Message -> id = $post -> ninjaboard_post_id;
-		if($topic->first_post_id == $post->ninjaboard_post_id) {
+		if ($topic -> first_post_id == $post -> ninjaboard_post_id) {
 			$Message -> parent = '0';
 		} else {
-			$Message -> parent = $topic->first_post_id;
+			$Message -> parent = $topic -> first_post_id;
 		}
-		
+
 		$Message -> thread = $topic -> first_post_id;
 		$Message -> subject = $post -> subject;
 		$Message -> locked = $post -> locked;
-		
+
 		$Message -> catid = $topic -> forum_id;
 		$Message -> userid = $post -> created_user_id;
 		$Message -> ip = $post -> user_ip;
 		$Message -> name = $post -> guest_name;
 		$Message -> email = $post -> guest_email;
 		$Message -> modified_by = $post -> modified_user_id;
-		if($Message -> modified_by){
-			$Message -> modified_time = JFactory::getDate($post -> modified) -> toUnix(); 
+		if ($Message -> modified_by) {
+			$Message -> modified_time = JFactory::getDate($post -> modified) -> toUnix();
 		}
-		
+
 		$Message -> modified_reason = $post -> edit_reason;
 		$Message -> hits = $topic -> hits;
 		$Message -> time = JFactory::getDate($post -> created_time) -> toUnix();
@@ -239,33 +237,32 @@ class MigrateNinjaBoard extends JApplicationCli {
 		}
 	}
 
-	function clearTables(){
+	function clearTables() {
 		$db = JFactory::getDBO();
 		$query = "TRUNCATE #__kunena_categories";
 		$db -> setQuery($query);
-		$result = $db->query();
-		if($result){
+		$result = $db -> query();
+		if ($result) {
 			$this -> out('TRUNCATE #__kunena_categories success');
 		}
-		
+
 		$query = "TRUNCATE #__kunena_messages";
 		$db -> setQuery($query);
-		$result = $db->query();
-		if($result){
+		$result = $db -> query();
+		if ($result) {
 			$this -> out('TRUNCATE #__kunena_messages success');
 		}
-		
-		
+
 		$query = "TRUNCATE #__kunena_messages_text";
 		$db -> setQuery($query);
-		$result = $db->query();
-		if($result){
+		$result = $db -> query();
+		if ($result) {
 			$this -> out('TRUNCATE #__kunena_messages_text success');
 		}
 		$query = "TRUNCATE #__kunena_users";
 		$db -> setQuery($query);
-		$result = $db->query();
-		if($result){
+		$result = $db -> query();
+		if ($result) {
 			$this -> out('TRUNCATE #__kunena_users success');
 		}
 	}
@@ -279,36 +276,35 @@ class MigrateNinjaBoard extends JApplicationCli {
 
 		// Purge all old records
 		$db = JFactory::getDBO();
-		
+
 		$this -> updateUserTable();
-		
-		$this->clearTables();
-		
+
+		$this -> clearTables();
+
 		//getting users in chunks
-		 $query = "SELECT COUNT(*) FROM jos_ninjaboard_people";
-		 $db -> setQuery($query);
-		 $limit = $db -> loadResult();
-		 $this -> out('MIGRATING NINJABOARD - USERS');
-		 $this -> out('------------------------------');
-		 $this -> out($limit .' user found');
+		$query = "SELECT COUNT(*) FROM jos_ninjaboard_people";
+		$db -> setQuery($query);
+		$limit = $db -> loadResult();
+		$this -> out('MIGRATING NINJABOARD - USERS');
+		$this -> out('------------------------------');
+		$this -> out($limit . ' user found');
 
-		 $user_id = 0;
+		$user_id = 0;
 
-		 // processing the users 100 at a time to avoid memory limit errors
-		 $limit = $limit / 100;
-		
-		 for ($i=0; $i <= $limit ; $i++) {
-		 $query = "select * from `jos_ninjaboard_people` WHERE ninjaboard_person_id > {$user_id} LIMIT 100";
-			 
-			 
-		 $db -> setQuery($query);
-		 $users = $db -> loadObjectList();
-		 
-		 foreach ($users as $user) {
-		 $user_id =  $this -> insertUser($user);
-		 }
-		 $this -> out($i * 100 .' / ' .$limit * 100 . ' Users Processed');
-		 }
+		// processing the users 100 at a time to avoid memory limit errors
+		$limit = $limit / 100;
+
+		for ($i = 0; $i <= $limit; $i++) {
+			$query = "select * from `jos_ninjaboard_people` WHERE ninjaboard_person_id > {$user_id} LIMIT 100";
+
+			$db -> setQuery($query);
+			$users = $db -> loadObjectList();
+
+			foreach ($users as $user) {
+				$user_id = $this -> insertUser($user);
+			}
+			$this -> out($i * 100 . ' / ' . $limit * 100 . ' Users Processed');
+		}
 
 		// Get the Forums
 		$this -> out('MIGRATING NINJABOARD - FORUMS');
@@ -317,7 +313,7 @@ class MigrateNinjaBoard extends JApplicationCli {
 		$forums = $db -> loadObjectList();
 
 		foreach ($forums as $forum) {
-			$this->insertForum($forum);
+			$this -> insertForum($forum);
 
 			// OK getting Ninjaboard Topics and messages and converting and adding them to discussions
 
@@ -338,12 +334,10 @@ class MigrateNinjaBoard extends JApplicationCli {
 				}
 
 			}
-			
-			
 
 		}
-		
-	$this-> addMotherCategory();
+
+		$this -> addMotherCategory();
 	}
 
 }
